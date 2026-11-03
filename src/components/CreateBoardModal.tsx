@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { X, Lock, Unlock, FolderPlus } from 'lucide-react';
-import { Board } from '../types';
+import { Board, UserProfile } from '../types';
 
 interface CreateBoardModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateBoard: (board: Board) => void;
+  user?: UserProfile;
 }
 
 export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
   isOpen,
   onClose,
   onCreateBoard,
+  user,
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -25,6 +27,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
 
     const newBoard: Board = {
       id: `board-${Date.now()}`,
+      userId: user?.uid,
       name: name.trim(),
       description: description.trim(),
       isPrivate,

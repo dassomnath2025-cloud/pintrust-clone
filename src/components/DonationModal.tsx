@@ -90,15 +90,17 @@ export const DonationModal: React.FC<DonationModalProps> = ({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Top Header Badge */}
+        {/* Top Header Logo */}
         <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/50 text-[#e60023] flex items-center justify-center shadow-xs">
-            <Heart className="w-5 h-5 fill-[#e60023]" />
-          </div>
+          <img
+            src="/assets/aistudio/Gemini_Generated_Image_f5mh3f5mh3f5mh3f_01b0e81b.png"
+            alt="Encript Logo"
+            className="w-12 h-12 rounded-full object-cover shadow-sm ring-2 ring-stone-200 dark:ring-stone-700"
+          />
         </div>
 
         <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 dark:text-white">
-          Support PinTrust
+          Support Encript
         </h3>
         <p className="mt-1 text-xs text-stone-500 dark:text-stone-400 max-w-sm mx-auto">
           {config.message || 'Scan the QR code with any UPI app to donate in Rupees (₹)'}

@@ -23,15 +23,29 @@ import { BoardsView } from './components/BoardsView';
 import { FollowingView } from './components/FollowingView';
 import { PinterestLanding } from './components/PinterestLanding';
 import { LoginSignupModal } from './components/LoginSignupModal';
+import { EditProfileModal } from './components/EditProfileModal';
 import { DonationModal } from './components/DonationModal';
 import { AdminDonationSettingsModal } from './components/AdminDonationSettingsModal';
+import { testConnection } from './lib/firebase';
+import {
+  saveUserProfileInDb,
+  getUserProfileFromDb,
+  createPinInDb,
+  updatePinInDb,
+  subscribePinsFromDb,
+  createBoardInDb,
+  subscribeBoardsFromDb,
+  subscribeDonationConfig,
+  saveDonationConfigInDb,
+} from './lib/firestoreService';
+import { subscribeAuthState, logOutUser } from './lib/authService';
 
 const DEFAULT_DONATION_CONFIG: DonationConfig = {
   adminEmail: 'dassomnath2025@gmail.com',
   upiId: 'dassomnath2025@okaxis',
   payeeName: 'Somnath Das',
   defaultAmount: 100,
-  message: 'Support PinTrust & Visual Creators in India',
+  message: 'Support Encript & Visual Creators in India',
   isActive: true,
 };
 
@@ -50,7 +64,11 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_BOARDS;
   });
 
-  const [user, setUser] = useState<UserProfile>(INITIAL_USER);
+  const [user, setUser] = useState<UserProfile>(() => {
+    const saved = localStorage.getItem('encript_user_profile');
+    return saved ? JSON.parse(saved) : INITIAL_USER;
+  });
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'explore' | 'following' | 'saved'>('explore');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Pins');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -79,7 +97,84 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  // Sync to localStorage
+  // 1. Connection test on boot (Firebase Integration Skill mandatory check)
+  useEffect(() => {
+    testConnection();
+  }, []);
+
+  // 2. Real-time Firebase Auth listener: syncs logged-in user profile from Firestore
+  useEffect(() => {
+    const unsubscribeAuth = subscribeAuthState(async (fbUser) => {
+      if (fbUser) {
+        try {
+          const profile = await getUserProfileFromDb(fbUser.uid);
+          if (profile) {
+            setUser(profile);
+          } else {
+            const handleStr = `@${(fbUser.displayName || 'user')
+              .toLowerCase()
+              .replace(/[^a-z0-9_]/g, '')
+              .slice(0, 15)}`;
+            const newProfile: UserProfile = {
+              uid: fbUser.uid,
+              name: fbUser.displayName || 'Visual Explorer',
+              handle: handleStr,
+              avatar:
+                fbUser.photoURL ||
+                `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(fbUser.uid)}`,
+              bio: 'Visual curator & aesthetic collector on Encript',
+              email: fbUser.email || '',
+              followersCount: 0,
+              followingCount: 0,
+            };
+            setUser(newProfile);
+            await saveUserProfileInDb(newProfile);
+          }
+        } catch (err) {
+          console.warn('Auth user sync note:', err);
+        }
+      }
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  // 3. Real-time Firestore Pins subscription: live cloud updates for all uploaded pins
+  useEffect(() => {
+    const unsubscribePins = subscribePinsFromDb((cloudPins) => {
+      if (cloudPins && cloudPins.length > 0) {
+        setPins((prev) => {
+          const cloudIds = new Set(cloudPins.map((p) => p.id));
+          const localCustom = prev.filter((p) => !cloudIds.has(p.id) && p.id.startsWith('pin-user-'));
+          return [...cloudPins, ...localCustom];
+        });
+      }
+    });
+    return () => unsubscribePins();
+  }, []);
+
+  // 4. Real-time Firestore Boards subscription
+  useEffect(() => {
+    const unsubscribeBoards = subscribeBoardsFromDb((cloudBoards) => {
+      if (cloudBoards && cloudBoards.length > 0) {
+        setBoards((prev) => {
+          const cloudIds = new Set(cloudBoards.map((b) => b.id));
+          const localCustom = prev.filter((b) => !cloudIds.has(b.id));
+          return [...cloudBoards, ...localCustom];
+        });
+      }
+    });
+    return () => unsubscribeBoards();
+  }, []);
+
+  // 5. Real-time Firestore Donation Config subscription
+  useEffect(() => {
+    const unsubscribeDonation = subscribeDonationConfig((config) => {
+      setDonationConfig(config);
+    });
+    return () => unsubscribeDonation();
+  }, []);
+
+  // Sync to localStorage as offline fallback
   useEffect(() => {
     try {
       localStorage.setItem('pintrust_pins', JSON.stringify(pins));
@@ -104,18 +199,57 @@ export default function App() {
     }
   }, [donationConfig]);
 
-  const handleSaveDonationConfig = (updated: DonationConfig) => {
-    setDonationConfig(updated);
-    showToast('Payment destination & donation settings updated!');
+  useEffect(() => {
+    try {
+      localStorage.setItem('encript_user_profile', JSON.stringify(user));
+    } catch {
+      // LocalStorage quota fallback
+    }
+  }, [user]);
+
+  const handleSaveProfile = async (updated: UserProfile) => {
+    setUser(updated);
+    showToast(`Profile updated! Welcome ${updated.name}`);
+    try {
+      await saveUserProfileInDb(updated);
+    } catch (err) {
+      console.warn('Profile DB save note:', err);
+    }
   };
 
-  const handleAuthenticateAdmin = () => {
-    setUser((prev) => ({
-      ...prev,
+  const handleSaveDonationConfig = async (updated: DonationConfig) => {
+    setDonationConfig(updated);
+    showToast('Payment destination & donation settings updated!');
+    try {
+      await saveDonationConfigInDb(updated);
+    } catch (err) {
+      console.warn('Donation DB save note:', err);
+    }
+  };
+
+  const handleAuthenticateAdmin = async () => {
+    const adminUser: UserProfile = {
+      ...user,
       email: 'dassomnath2025@gmail.com',
       name: 'Somnath Das',
-    }));
+    };
+    setUser(adminUser);
     showToast('Verified Google Account: dassomnath2025@gmail.com');
+    try {
+      await saveUserProfileInDb(adminUser);
+    } catch (err) {
+      console.warn('Admin profile save note:', err);
+    }
+  };
+
+  const handleLogOut = async () => {
+    try {
+      await logOutUser();
+      setUser(INITIAL_USER);
+      showToast('Logged out of Encript');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
   };
 
   // Toast trigger helper
@@ -129,16 +263,19 @@ export default function App() {
   // Toggle Save Pin to Board
   const handleToggleSave = (pinId: string, boardId?: string) => {
     const targetBoardId = boardId || boards[0]?.id || '';
+    let updatedSaves = 0;
+    let willBeSaved = false;
+
     setPins((prevPins) =>
       prevPins.map((p) => {
         if (p.id === pinId) {
-          const willBeSaved = !p.isSaved;
-          const updatedSavesCount = willBeSaved ? p.savesCount + 1 : Math.max(0, p.savesCount - 1);
+          willBeSaved = !p.isSaved;
+          updatedSaves = willBeSaved ? p.savesCount + 1 : Math.max(0, p.savesCount - 1);
           return {
             ...p,
             isSaved: willBeSaved,
             savedInBoardId: willBeSaved ? targetBoardId : undefined,
-            savesCount: updatedSavesCount,
+            savesCount: updatedSaves,
           };
         }
         return p;
@@ -148,36 +285,40 @@ export default function App() {
     // Update active modal pin if open
     setActivePinModal((curr) => {
       if (curr && curr.id === pinId) {
-        const willBeSaved = !curr.isSaved;
         return {
           ...curr,
           isSaved: willBeSaved,
           savedInBoardId: willBeSaved ? targetBoardId : undefined,
-          savesCount: willBeSaved ? curr.savesCount + 1 : Math.max(0, curr.savesCount - 1),
+          savesCount: updatedSaves,
         };
       }
       return curr;
     });
 
-    const targetPin = pins.find((p) => p.id === pinId);
     const targetBoard = boards.find((b) => b.id === targetBoardId);
-    if (targetPin?.isSaved) {
-      showToast('Removed from saved pins');
-    } else {
-      showToast(`Saved to ${targetBoard?.name || 'Board'}`);
-    }
+    showToast(willBeSaved ? `Saved to ${targetBoard?.name || 'Board'}` : 'Removed from saved pins');
+
+    // Sync save to Firestore
+    updatePinInDb(pinId, {
+      savesCount: updatedSaves,
+      savedInBoardId: willBeSaved ? targetBoardId : '',
+    }).catch((err) => console.warn('Sync save to db note:', err));
   };
 
   // Toggle Like Pin
   const handleToggleLike = (pinId: string) => {
+    let willBeLiked = false;
+    let updatedLikes = 0;
+
     setPins((prevPins) =>
       prevPins.map((p) => {
         if (p.id === pinId) {
-          const willBeLiked = !p.isLiked;
+          willBeLiked = !p.isLiked;
+          updatedLikes = willBeLiked ? p.likesCount + 1 : Math.max(0, p.likesCount - 1);
           return {
             ...p,
             isLiked: willBeLiked,
-            likesCount: willBeLiked ? p.likesCount + 1 : Math.max(0, p.likesCount - 1),
+            likesCount: updatedLikes,
           };
         }
         return p;
@@ -186,15 +327,19 @@ export default function App() {
 
     setActivePinModal((curr) => {
       if (curr && curr.id === pinId) {
-        const willBeLiked = !curr.isLiked;
         return {
           ...curr,
           isLiked: willBeLiked,
-          likesCount: willBeLiked ? curr.likesCount + 1 : Math.max(0, curr.likesCount - 1),
+          likesCount: updatedLikes,
         };
       }
       return curr;
     });
+
+    // Sync like to Firestore
+    updatePinInDb(pinId, { likesCount: updatedLikes }).catch((err) =>
+      console.warn('Sync like to db note:', err)
+    );
   };
 
   // Toggle Follow Author
@@ -250,12 +395,15 @@ export default function App() {
       likes: 0,
     };
 
+    let updatedCommentsList: any[] = [];
+
     setPins((prevPins) =>
       prevPins.map((p) => {
         if (p.id === pinId) {
+          updatedCommentsList = [newCommentObj, ...p.comments];
           return {
             ...p,
-            comments: [newCommentObj, ...p.comments],
+            comments: updatedCommentsList,
           };
         }
         return p;
@@ -273,12 +421,19 @@ export default function App() {
     });
 
     showToast('Comment posted');
+
+    if (updatedCommentsList.length > 0) {
+      updatePinInDb(pinId, { comments: updatedCommentsList }).catch((err) =>
+        console.warn('Sync comment to db note:', err)
+      );
+    }
   };
 
   // Like a comment
   const handleLikeComment = (pinId: string, commentId: string) => {
-    const updateComments = (comments: typeof pins[0]['comments']) =>
-      comments.map((c) => {
+    let syncedComments: any[] = [];
+    const updateComments = (comments: typeof pins[0]['comments']) => {
+      const res = comments.map((c) => {
         if (c.id === commentId) {
           const userLiked = !c.userLiked;
           return {
@@ -289,6 +444,9 @@ export default function App() {
         }
         return c;
       });
+      syncedComments = res;
+      return res;
+    };
 
     setPins((prevPins) =>
       prevPins.map((p) => {
@@ -311,19 +469,37 @@ export default function App() {
       }
       return curr;
     });
+
+    if (syncedComments.length > 0) {
+      updatePinInDb(pinId, { comments: syncedComments }).catch((err) =>
+        console.warn('Sync like comment note:', err)
+      );
+    }
   };
 
-  // Create new Pin
-  const handleCreatePin = (newPin: Pin) => {
+  // Create new Pin and persist to Firestore
+  const handleCreatePin = async (newPin: Pin) => {
     setPins([newPin, ...pins]);
     setActiveTab('explore');
     showToast(`Published pin "${newPin.title}"!`);
+
+    try {
+      await createPinInDb(newPin);
+    } catch (err) {
+      console.warn('Firestore pin upload note:', err);
+    }
   };
 
-  // Create new Board
-  const handleCreateBoard = (newBoard: Board) => {
+  // Create new Board and persist to Firestore
+  const handleCreateBoard = async (newBoard: Board) => {
     setBoards([...boards, newBoard]);
     showToast(`Created board "${newBoard.name}"!`);
+
+    try {
+      await createBoardInDb(newBoard);
+    } catch (err) {
+      console.warn('Firestore board creation note:', err);
+    }
   };
 
   // Share Pin / Copy Link
@@ -377,7 +553,7 @@ export default function App() {
   }, [pins, selectedCategory, searchQuery, sortBy]);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors duration-200">
+    <div className="min-h-screen bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors duration-200 overflow-x-hidden">
       {/* View Switcher Floating Badge at Bottom */}
       <div className="fixed bottom-4 right-4 z-50">
         <button
@@ -431,50 +607,33 @@ export default function App() {
             donationConfig={donationConfig}
             onOpenDonationModal={() => setIsDonationModalOpen(true)}
             onOpenAdminSettings={() => setIsAdminSettingsOpen(true)}
+            onOpenEditProfile={() => setIsEditProfileOpen(true)}
+            onLogOut={handleLogOut}
+            onOpenLogin={() => {
+              setAuthMode('login');
+              setAuthModalOpen(true);
+            }}
           />
 
           <main className="flex-1">
             {activeTab === 'explore' && (
-              <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-4">
-                {/* Back Option Bar */}
-                <div className="flex items-center justify-between pb-3 mb-4 border-b border-stone-200/70 dark:border-stone-800/70">
-                  <button
-                    onClick={() => {
-                      if (searchQuery) {
-                        setSearchQuery('');
-                      } else if (selectedCategory !== 'All Pins') {
-                        setSelectedCategory('All Pins');
-                      } else {
-                        setCurrentView('landing');
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-100 dark:bg-stone-850 hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-bold transition-all hover:-translate-x-0.5 cursor-pointer shadow-2xs border border-stone-200/60 dark:border-stone-750"
-                    title="Go back to previous view"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5 text-[#e60023]" />
-                    <span>
-                      {searchQuery
-                        ? 'Back to All Results'
-                        : selectedCategory !== 'All Pins'
-                        ? 'Back to All Pins'
-                        : 'Back to in.pinterest.com'}
-                    </span>
-                  </button>
-
-                  {(searchQuery || selectedCategory !== 'All Pins') && (
-                    <button
-                      onClick={() => setCurrentView('landing')}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-stone-900 dark:hover:text-stone-200 transition-colors cursor-pointer"
-                    >
-                      <ArrowLeft className="w-3 h-3" />
-                      <span>Back to Landing Page</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Category Filter Pills (Pinterest style) */}
-                <div className="flex items-center justify-between gap-4 mb-5 overflow-x-auto pb-1 scrollbar-none">
+              <div className="max-w-[1920px] mx-auto px-3 sm:px-6 pt-3 pb-6">
+                {/* Category Filter Pills (Clean Pinterest style, no space section, no downside scrollbar) */}
+                <div className="flex items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-5 overflow-x-auto pb-1 scrollbar-none no-scrollbar">
                   <div className="flex items-center gap-2 shrink-0">
+                    {(searchQuery || selectedCategory !== 'All Pins') && (
+                      <button
+                        onClick={() => {
+                          setSearchQuery('');
+                          setSelectedCategory('All Pins');
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-full bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-900 dark:text-stone-100 transition-colors cursor-pointer shrink-0"
+                        title="Reset to All Pins"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5 text-[#e60023]" />
+                        <span>All</span>
+                      </button>
+                    )}
                     {CATEGORIES.map((cat) => (
                       <button
                         key={cat}
@@ -563,6 +722,7 @@ export default function App() {
                 boards={boards}
                 allPins={pins}
                 onOpenCreateBoard={() => setIsCreateBoardModalOpen(true)}
+                onOpenEditProfile={() => setIsEditProfileOpen(true)}
                 onOpenModal={(p) => setActivePinModal(p)}
                 onToggleSave={handleToggleSave}
                 onToggleLike={handleToggleLike}
@@ -611,9 +771,13 @@ export default function App() {
         isOpen={authModalOpen}
         initialMode={authMode}
         onClose={() => setAuthModalOpen(false)}
-        onSuccess={() => {
+        onSuccess={(profile) => {
+          if (profile) {
+            setUser(profile);
+            saveUserProfileInDb(profile).catch((err) => console.warn('Profile save note:', err));
+          }
           setCurrentView('feed');
-          showToast('Welcome to Pinterest!');
+          showToast(`Welcome to Encript${profile?.name ? `, ${profile.name}` : ''}!`);
         }}
       />
 
@@ -638,6 +802,14 @@ export default function App() {
         currentUser={user}
         onSaveConfig={handleSaveDonationConfig}
         onAuthenticateAdmin={handleAuthenticateAdmin}
+      />
+
+      {/* Edit Profile Modal (Name Bar, Picture Change, Mobile-Optimized) */}
+      <EditProfileModal
+        isOpen={isEditProfileOpen}
+        user={user}
+        onClose={() => setIsEditProfileOpen(false)}
+        onSave={handleSaveProfile}
       />
 
       {/* Toast Notification */}

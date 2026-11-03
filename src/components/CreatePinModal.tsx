@@ -35,9 +35,40 @@ export const CreatePinModal: React.FC<CreatePinModalProps> = ({
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-      if (e.target?.result) {
-        setImageUrl(e.target.result as string);
-      }
+      const rawDataUrl = e.target?.result as string;
+      if (!rawDataUrl) return;
+
+      // Optimize & scale down large camera images using Canvas
+      const img = new Image();
+      img.onload = () => {
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1600;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+          if (width / height > MAX_WIDTH / MAX_HEIGHT) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          } else {
+            width = Math.round((width * MAX_HEIGHT) / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          setImageUrl(compressedDataUrl);
+        } else {
+          setImageUrl(rawDataUrl);
+        }
+      };
+      img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
   };
@@ -68,7 +99,7 @@ export const CreatePinModal: React.FC<CreatePinModalProps> = ({
     const newPin: Pin = {
       id: `pin-user-${Date.now()}`,
       title: title.trim(),
-      description: description.trim() || 'Created with PinTrust visual discovery studio.',
+      description: description.trim() || 'Created with Encript visual discovery studio.',
       imageUrl: imageUrl,
       aspectRatio: aspectRatio,
       category: category,
@@ -79,6 +110,7 @@ export const CreatePinModal: React.FC<CreatePinModalProps> = ({
         followersCount: user.followersCount,
         isFollowing: false,
       },
+      authorId: user.uid,
       savesCount: 1,
       likesCount: 1,
       isSaved: true,

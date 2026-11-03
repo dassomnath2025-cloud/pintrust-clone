@@ -64,10 +64,11 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
             src={user.avatar}
             alt={user.name}
             referrerPolicy="no-referrer"
-            className="w-28 h-28 rounded-full object-cover ring-4 ring-rose-500/20 shadow-lg group-hover:opacity-90 transition-opacity"
+            className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover ring-4 ring-rose-500/20 shadow-lg group-hover:opacity-90 transition-opacity"
           />
-          <div className="absolute inset-0 rounded-full bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-semibold">
-            <Edit3 className="w-5 h-5" />
+          {/* Touch-friendly Camera badge */}
+          <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#e60023] text-white flex items-center justify-center shadow-md ring-2 ring-white dark:ring-stone-900 group-hover:scale-110 transition-transform">
+            <Edit3 className="w-4 h-4" />
           </div>
         </div>
 
@@ -116,21 +117,21 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
           <span>{allSavedPins.length} saved ideas</span>
         </div>
 
-        {/* Action buttons: Edit Profile & Share Profile */}
+        {/* Action buttons: Edit Profile & Share Profile with thumb touch hitboxes */}
         <div className="mt-5 flex items-center gap-2.5">
           <button
             onClick={onOpenEditProfile}
-            className="flex items-center gap-1.5 px-4 py-2 bg-stone-900 text-white dark:bg-white dark:text-stone-900 hover:opacity-90 text-xs font-semibold rounded-full shadow-xs transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-5 min-h-[44px] bg-stone-900 text-white dark:bg-white dark:text-stone-900 hover:opacity-90 active:scale-[0.98] text-xs font-bold rounded-full shadow-sm transition-all cursor-pointer"
           >
-            <Edit3 className="w-3.5 h-3.5" />
+            <Edit3 className="w-4 h-4 text-[#e60023]" />
             <span>Edit Profile</span>
           </button>
 
           <button
             onClick={onShareProfile}
-            className="flex items-center gap-1.5 px-4 py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-semibold rounded-full transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-5 min-h-[44px] bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 active:scale-[0.98] text-stone-800 dark:text-stone-200 text-xs font-bold rounded-full transition-all cursor-pointer"
           >
-            <Share2 className="w-3.5 h-3.5" />
+            <Share2 className="w-4 h-4" />
             <span>Share</span>
           </button>
         </div>

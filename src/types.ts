@@ -24,6 +24,7 @@ export interface Pin {
   aspectRatio: '3:4' | '4:3' | '1:1' | '16:9' | '9:16';
   category: string;
   author: Author;
+  authorId?: string;
   savesCount: number;
   likesCount: number;
   isSaved?: boolean;
@@ -37,6 +38,7 @@ export interface Pin {
 
 export interface Board {
   id: string;
+  userId?: string;
   name: string;
   description: string;
   isPrivate: boolean;
@@ -46,6 +48,7 @@ export interface Board {
 }
 
 export interface UserProfile {
+  uid?: string;
   name: string;
   handle: string;
   avatar: string;
@@ -65,3 +68,7 @@ export interface DonationConfig {
   message: string;
   isActive: boolean;
 }
+
+export const LOGO_URL = '/assets/aistudio/Gemini_Generated_Image_f5mh3f5mh3f5mh3f_01b0e81b.png';
+export const APP_NAME = 'Encript';
+

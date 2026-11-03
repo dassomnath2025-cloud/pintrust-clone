@@ -85,22 +85,23 @@ export const PinterestLanding: React.FC<PinterestLandingProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans selection:bg-[#e60023]/20 selection:text-[#e60023] transition-colors">
+    <div className="min-h-screen bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans selection:bg-[#e60023]/20 selection:text-[#e60023] transition-colors overflow-x-hidden">
       {/* Official in.pinterest.com Top Navigation */}
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-stone-100 dark:border-stone-800 transition-colors">
         <div className="flex items-center gap-6">
-          {/* Pinterest Official Red Badge & Wordmark */}
+          {/* Encript Official Logo & Wordmark */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="flex items-center gap-2 cursor-pointer focus:outline-none"
+            className="flex items-center gap-2.5 cursor-pointer focus:outline-none group"
+            title="Encript"
           >
-            <div className="w-9 h-9 rounded-full bg-[#e60023] flex items-center justify-center shadow-xs">
-              <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
-                <path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.291 1.199-.33 1.365-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.546.535 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12z" />
-              </svg>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-[#e60023]">
-              Pinterest
+            <img
+              src="/assets/aistudio/Gemini_Generated_Image_f5mh3f5mh3f5mh3f_01b0e81b.png"
+              alt="Encript Logo"
+              className="w-10 h-10 rounded-full object-cover shadow-xs ring-1 ring-stone-200 dark:ring-stone-700 group-hover:scale-105 transition-transform"
+            />
+            <span className="text-2xl font-bold tracking-tight text-stone-900 dark:text-white font-sans">
+              Encript
             </span>
           </button>
 
@@ -427,7 +428,7 @@ export const PinterestLanding: React.FC<PinterestLandingProps> = ({
               See it, make it, try it, do it
             </h2>
             <p className="text-lg sm:text-xl text-[#c05621] font-medium leading-relaxed max-w-md mx-auto md:mx-0">
-              The best part of Pinterest is discovering new things and ideas from creators around the world and bringing them to life.
+              The best part of Encript is discovering new things and ideas from creators around the world and bringing them to life.
             </p>
             <div className="pt-2">
               <button
@@ -451,7 +452,7 @@ export const PinterestLanding: React.FC<PinterestLandingProps> = ({
                 Creator Spotlight
               </span>
               <p className="text-lg font-bold mt-1">
-                "Pinterest made me realize I could turn my ceramic hobby into a studio."
+                "Encript made me realize I could turn my ceramic hobby into a studio."
               </p>
               <p className="text-xs text-stone-300 mt-1">— Kavita, Studio Potter</p>
             </div>
@@ -460,7 +461,7 @@ export const PinterestLanding: React.FC<PinterestLandingProps> = ({
       </section>
 
       {/* Section 5: Sign Up Embed Card */}
-      <section className="min-h-screen bg-stone-900 text-white flex items-center justify-center px-4 py-20 relative">
+      <section className="min-h-screen bg-stone-900 text-white flex items-center justify-center px-4 py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-15 overflow-hidden pointer-events-none">
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-4 transform rotate-12 scale-125">
             {[
@@ -483,17 +484,19 @@ export const PinterestLanding: React.FC<PinterestLandingProps> = ({
         </div>
 
         <div className="relative z-10 w-full max-w-md bg-white text-stone-900 rounded-[32px] p-8 sm:p-10 shadow-2xl text-center">
-          <div className="w-12 h-12 mx-auto rounded-full bg-[#e60023] text-white flex items-center justify-center shadow-sm">
-            <svg className="w-7 h-7 fill-white" viewBox="0 0 24 24">
-              <path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.291 1.199-.33 1.365-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.546.535 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12z" />
-            </svg>
+          <div className="w-16 h-16 mx-auto rounded-full overflow-hidden shadow-md ring-2 ring-stone-200">
+            <img
+              src="/assets/aistudio/Gemini_Generated_Image_f5mh3f5mh3f5mh3f_01b0e81b.png"
+              alt="Encript Logo"
+              className="w-full h-full object-cover"
+            />
           </div>
 
           <h3 className="mt-4 text-2xl font-bold tracking-tight text-stone-900">
             Sign up to get your ideas
           </h3>
           <p className="mt-1 text-xs text-stone-500">
-            Join over 500 million people discovering ideas on Pinterest.
+            Join millions of creators discovering ideas on Encript.
           </p>
 
           <div className="mt-6 space-y-3">
@@ -501,7 +504,7 @@ export const PinterestLanding: React.FC<PinterestLandingProps> = ({
               onClick={onEnterApp}
               className="w-full py-3 bg-[#e60023] hover:bg-[#ad081b] text-white font-bold text-sm rounded-full transition-colors cursor-pointer shadow-sm flex items-center justify-center gap-2"
             >
-              <span>Explore Pinterest</span>
+              <span>Explore Encript</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
@@ -514,7 +517,7 @@ export const PinterestLanding: React.FC<PinterestLandingProps> = ({
           </div>
 
           <p className="mt-5 text-[11px] text-stone-400 leading-tight">
-            By signing up, you agree to Pinterest's Terms of Service and Privacy Policy.
+            By signing up, you agree to Encript's Terms of Service and Privacy Policy.
           </p>
         </div>
       </section>
@@ -535,7 +538,7 @@ export const PinterestLanding: React.FC<PinterestLandingProps> = ({
           <a href="#" className="hover:text-white transition-colors">Watch</a>
         </div>
         <div className="mt-6 text-center text-[11px] text-stone-500">
-          © 2026 Pinterest India Clone. Inspired by in.pinterest.com
+          © 2026 Encript. All rights reserved.
         </div>
       </footer>
     </div>

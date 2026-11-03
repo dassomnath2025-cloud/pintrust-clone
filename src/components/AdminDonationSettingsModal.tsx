@@ -213,7 +213,7 @@ export const AdminDonationSettingsModal: React.FC<AdminDonationSettingsModalProp
                 <MessageSquare className="w-4 h-4 text-stone-400 shrink-0" />
                 <input
                   type="text"
-                  placeholder="e.g. PinTrust Creator & Studio Support"
+                  placeholder="e.g. Encript Creator & Studio Support"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   className="w-full bg-transparent text-xs text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none"
